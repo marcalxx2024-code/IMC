@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de IMC</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --surface-0: #0f0f0f;
+      --surface-1: rgba(255,255,255,0.06);
+      --surface-2: rgba(255,255,255,0.10);
+      --text-primary: #f0ede6;
+      --text-secondary: #b0ada6;
+      --text-muted: #7a7870;
+      --border: rgba(255,255,255,0.12);
+      --border-strong: rgba(255,255,255,0.22);
+      --radius: 8px;
+      --font-sans: system-ui, -apple-system, sans-serif;
+
+      --bg-success: rgba(59,109,17,0.3);
+      --border-success: #4e8a1a;
+      --text-success: #a3d46a;
+
+      --bg-warning: rgba(133,79,11,0.3);
+      --border-warning: #c47d10;
+      --text-warning: #fac775;
+
+      --bg-danger: rgba(80,19,19,0.3);
+      --border-danger: #a32d2d;
+      --text-danger: #f09595;
+
+      --bg-accent: rgba(4,44,83,0.35);
+      --border-accent: #185fa5;
+      --text-accent: #85b7eb;
+
+      --fill-primary: #e8f02a;
+      --on-primary: #0f0f0f;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1rem;
+
+      /* Fundo de academia com overlay escuro */
+      background-color: #0f0f0f;
+      background-image:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,0.72) 0%,
+          rgba(0,0,0,0.60) 40%,
+          rgba(0,0,0,0.80) 100%
+        ),
+        url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=80&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(15, 15, 15, 0.65);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 2rem 1.75rem;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .field-inner {
+      position: relative;
+    }
+
+    .field-inner input {
+      width: 100%;
+      padding: 9px 40px 9px 12px;
+      font-size: 15px;
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.08);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    .field-inner input::-webkit-outer-spin-button,
+    .field-inner input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+    }
+
+    .field-inner input:focus {
+      border-color: #378add;
+      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.15);
+    }
+
+    .field-inner span {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--fill-primary);
+      color: var(--on-primary);
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn:active { transform: scale(0.98); }
+
+    /* ── Result card ── */
+    .result-card {
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 1.5rem 1.25rem;
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    .result-card.show { display: block; }
+
+    .imc-value {
+      font-size: 52px;
+      font-weight: 500;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .imc-label {
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      margin-bottom: 1.25rem;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 1.25rem;
+    }
+
+    .status-badge i { font-size: 20px; }
+    .status-badge span { font-size: 15px; font-weight: 500; }
+
+    .status-msg {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+
+    .divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 1.25rem 0;
+    }
+
+    .section-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    .tips-box {
+      margin-top: 1rem;
+      padding: 0.95rem 1rem;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid var(--border);
+    }
+
+    .tips-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .tips-list li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .tips-list li::before {
+      content: "•";
+      color: var(--text-primary);
+      margin-right: 8px;
+    }
+
+    /* ── Bar ── */
+    .field-inner input::placeholder { color: rgba(255,255,255,0.3); }
+
+    .bar-bg {
+      height: 8px;
+      border-radius: 99px;
+      background: var(--surface-1);
+      overflow: visible;
+      position: relative;
+      display: flex;
+      border: 0.5px solid var(--border);
+    }
+
+    .bar-seg { height: 100%; flex: 1; }
+    .bar-seg:first-child { border-radius: 99px 0 0 99px; }
+    .bar-seg:last-child  { border-radius: 0 99px 99px 0; }
+
+    .bar-marker {
+      position: absolute;
+      top: -4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 2px solid;
+      transform: translateX(-50%);
+      transition: left 0.4s cubic-bezier(.4,0,.2,1);
+    }
+
+    .bar-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+
+    .bar-labels span { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Table ── */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table tr { border-bottom: 0.5px solid var(--border); }
+    .table tr:last-child { border-bottom: none; }
+    .table td { padding: 7px 4px; color: var(--text-secondary); }
+    .table td:first-child { color: var(--text-primary); }
+    .table .active-row td { color: var(--text-primary); font-weight: 500; }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <h1>Calculadora de IMC</h1>
+  <p class="subtitle">Índice de Massa Corporal — insira seu peso e altura</p>
+
+  <div class="inputs">
+    <div class="field">
+      <label for="peso">Peso</label>
+      <div class="field-inner">
+        <input type="number" id="peso" placeholder="70" min="1" max="300" step="0.1">
+        <span>kg</span>
+      </div>
+    </div>
+    <div class="field">
+      <label for="altura">Altura</label>
+      <div class="field-inner">
+        <input type="number" id="altura" placeholder="1.70" min="0.5" max="2.5" step="0.01">
+        <span>m</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" onclick="calcular()">Calcular IMC</button>
+
+  <div class="result-card" id="result">
+
+    <div class="imc-value" id="imc-num">—</div>
+    <div class="imc-label">seu índice de massa corporal</div>
+
+    <div class="status-badge" id="status-badge">
+      <i class="ti" id="status-icon"></i>
+      <span id="status-text"></span>
+    </div>
+
+    <p class="status-msg" id="status-msg"></p>
+
+    <div class="tips-box" id="tips-box">
+      <p class="section-title" id="tips-title">dicas de alimentação</p>
+      <ul class="tips-list" id="tips-list"></ul>
+    </div>
+
+    <hr class="divider">
+
+    <p class="section-title">onde você está na escala</p>
+    <div>
+      <div class="bar-bg" id="bar">
+        <div class="bar-seg" style="background:#B5D4F4;"></div>
+        <div class="bar-seg" style="background:#C0DD97;"></div>
+        <div class="bar-seg" style="background:#FAC775;"></div>
+        <div class="bar-seg" style="background:#F0997B;"></div>
+        <div class="bar-seg" style="background:#E24B4A;"></div>
+        <div class="bar-marker" id="marker" style="left:0%; border-color:#888;"></div>
+      </div>
+      <div class="bar-labels">
+        <span>&lt;16</span>
+        <span>18,5</span>
+        <span>25</span>
+        <span>30</span>
+        <span>35</span>
+        <span>40+</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <p class="section-title">tabela de classificação</p>
+    <table class="table">
+      <tbody>
+        <tr id="row-0"><td><span class="dot" style="background:#B5D4F4;"></span>Abaixo do peso</td><td style="text-align:right">&lt; 18,5</td><td id="t1"></td></tr>
+        <tr id="row-1"><td><span class="dot" style="background:#C0DD97;"></span>Peso normal</td><td style="text-align:right">18,5 – 24,9</td><td id="t2"></td></tr>
+        <tr id="row-2"><td><span class="dot" style="background:#FAC775;"></span>Sobrepeso</td><td style="text-align:right">25 – 29,9</td><td id="t3"></td></tr>
+        <tr id="row-3"><td><span class="dot" style="background:#F0997B;"></span>Obesidade grau I</td><td style="text-align:right">30 – 34,9</td><td id="t4"></td></tr>
+        <tr id="row-4"><td><span class="dot" style="background:#E24B4A;"></span>Obesidade grau II+</td><td style="text-align:right">≥ 35</td><td id="t5"></td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<script>
+  const classes = [
+    {
+      label: "Abaixo do peso",
+      icon: "ti-arrow-down-circle",
+      color: "#0C447C",
+      bg: "var(--bg-accent)",
+      border: "var(--border-accent)",
+      markerColor: "#378ADD",
+      msg: "Seu peso está abaixo do recomendado para sua altura. Procure um nutricionista para orientações sobre alimentação e ganho de peso saudável.",
+      goal: "ganhar peso",
+      tips: [
+        "Inclua 3 refeições principais e 2 lanches saudáveis ao longo do dia.",
+        "Priorize alimentos calóricos e nutritivos, como arroz, pão, massas, aveia, leite, ovos, frutas, castanhas e azeite.",
+        "Evite pular refeições e tente aumentar a quantidade de alimentos aos poucos."
+      ],
+      row: "t1",
+      pct: (v) => Math.max(0, Math.min(20, (v / 18.5) * 20))
+    },
+    {
+      label: "Peso normal",
+      icon: "ti-circle-check",
+      color: "#3B6D11",
+      bg: "var(--bg-success)",
+      border: "var(--border-success)",
+      markerColor: "#639922",
+      msg: "Parabéns! Seu peso está dentro da faixa saudável. Continue mantendo uma alimentação equilibrada e praticando atividades físicas regularmente.",
+      goal: "manter o peso",
+      tips: [
+        "Mantenha uma dieta equilibrada com proteínas, verduras, legumes, frutas e carboidratos integrais.",
+        "Beba água ao longo do dia e evite exageros em alimentos ultraprocessados.",
+        "Continue com refeições regulares e atividade física para manter o peso estável."
+      ],
+      row: "t2",
+      pct: (v) => 20 + Math.min(20, ((v - 18.5) / 6.4) * 20)
+    },
+    {
+      label: "Sobrepeso",
+      icon: "ti-alert-circle",
+      color: "#854F0B",
+      bg: "var(--bg-warning)",
+      border: "var(--border-warning)",
+      markerColor: "#EF9F27",
+      msg: "Você está um pouco acima do peso ideal. Pequenas mudanças na alimentação e a prática regular de exercícios já fazem grande diferença.",
+      goal: "perder peso",
+      tips: [
+        "Prefira refeições com mais verduras, legumes, proteínas magras e menos frituras.",
+        "Reduza doces, bebidas açucaradas, salgadinhos e alimentos ultraprocessados.",
+        "Controle porções e tente comer devagar para perceber melhor a saciedade."
+      ],
+      row: "t3",
+      pct: (v) => 40 + Math.min(20, ((v - 25) / 4.9) * 20)
+    },
+    {
+      label: "Obesidade grau I",
+      icon: "ti-alert-triangle",
+      color: "#993C1D",
+      bg: "var(--bg-danger)",
+      border: "var(--border-danger)",
+      markerColor: "#D85A30",
+      msg: "Seu IMC indica obesidade grau I. É recomendável buscar acompanhamento médico para um plano de emagrecimento seguro e eficaz.",
+      goal: "perder peso com segurança",
+      tips: [
+        "Priorize refeições leves com verduras, legumes, proteínas magras e pouca gordura.",
+        "Evite ultraprocessados, refrigerantes, frituras e excessos de açúcar.",
+        "Busque orientação profissional para montar um plano alimentar seguro e sustentável."
+      ],
+      row: "t4",
+      pct: (v) => 60 + Math.min(20, ((v - 30) / 4.9) * 20)
+    },
+    {
+      label: "Obesidade grau II ou mais",
+      icon: "ti-alert-triangle",
+      color: "#791F1F",
+      bg: "var(--bg-danger)",
+      border: "var(--border-danger)",
+      markerColor: "#E24B4A",
+      msg: "Seu IMC está em uma faixa de risco elevado. Consulte um médico com urgência para receber o suporte adequado à sua saúde.",
+      goal: "perder peso com segurança",
+      tips: [
+        "Escolha refeições simples e nutritivas, com bastante vegetais, proteínas magras e pouca gordura.",
+        "Elimine ou reduza bastante alimentos ultraprocessados, doces e bebidas açucaradas.",
+        "Procure acompanhamento médico ou nutricional para um plano adequado à sua saúde."
+      ],
+      row: "t5",
+      pct: (v) => 80 + Math.min(19, ((v - 35) / 10) * 20)
+    }
+  ];
+
+  function getClass(imc) {
+    if (imc < 18.5) return 0;
+    if (imc < 25)   return 1;
+    if (imc < 30)   return 2;
+    if (imc < 35)   return 3;
+    return 4;
+  }
+
+  function calcular() {
+    const peso   = parseFloat(document.getElementById('peso').value);
+    const altura = parseFloat(document.getElementById('altura').value);
+
+    if (!peso || !altura || peso <= 0 || altura <= 0 || altura > 2.5) {
+      alert('Por favor, insira valores válidos de peso e altura.');
+      return;
+    }
+
+    const imc = peso / (altura * altura);
+    const idx = getClass(imc);
+    const cls = classes[idx];
+
+    /* IMC display */
+    document.getElementById('imc-num').textContent = imc.toFixed(1).replace('.', ',');
+    document.getElementById('result').classList.add('show');
+
+    /* Badge */
+    const badge = document.getElementById('status-badge');
+    badge.style.background  = cls.bg;
+    badge.style.border      = '0.5px solid ' + cls.border;
+
+    const icon = document.getElementById('status-icon');
+    icon.className  = 'ti ' + cls.icon;
+    icon.style.color = cls.color;
+
+    const statusText = document.getElementById('status-text');
+    statusText.textContent = cls.label;
+    statusText.style.color = cls.color;
+
+    document.getElementById('status-msg').textContent = cls.msg;
+
+    const tipsTitle = document.getElementById('tips-title');
+    tipsTitle.textContent = 'dicas para ' + cls.goal;
+
+    const tipsList = document.getElementById('tips-list');
+    tipsList.innerHTML = cls.tips.map(tip => `<li>${tip}</li>`).join('');
+
+    /* Bar marker */
+    const pct = cls.pct(imc);
+    document.getElementById('marker').style.left        = pct.toFixed(1) + '%';
+    document.getElementById('marker').style.borderColor = cls.markerColor;
+
+    /* Table highlight */
+    const cellIds = ['t1','t2','t3','t4','t5'];
+    cellIds.forEach((id, i) => {
+      document.getElementById(id).innerHTML = '';
+      document.getElementById('row-' + i).classList.remove('active-row');
+    });
+    document.getElementById(cls.row).innerHTML =
+      '<i class="ti ti-chevron-left" style="font-size:14px; color:' + cls.color + '"></i>';
+    document.getElementById('row-' + idx).classList.add('active-row');
+
+    /* Scroll into view */
+    document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') calcular();
+  });
+</script>
+
+</body>
+</html>
